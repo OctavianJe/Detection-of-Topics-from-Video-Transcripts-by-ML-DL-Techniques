@@ -41,6 +41,7 @@ Arguments:
 - (--dataset) is used to select the dataset:
     UPV: UPV
     Wikipedia: Wikipedia
+    input: input
 
 - (--model) is used to set the topic model:
     Machine Learning (ML):
@@ -50,8 +51,14 @@ Arguments:
     Deep Learning (DL):
         Bidirectional Encoder Representations from Transformers: BERT
 
-- (--train) is used to train the model
+- (--train) is used to train the model (only for UPV and Wikipedia)
+
+- (--embedding) is used to define the embedding used when training only an ML model: 
+    Count Vectorizer: CV
+    Term Frequency - Inverse Document Frequency: TF-IDF
 
 - (--download-dataset) is used to download the base Wikipedia dataset from Hugging Face
 
 - (--download-categories) is used to download the categories of each Wikipedia dataset using data scrapping technique
+
+- (--file) is used to read content for model evaluation from a text file instead of Terminal when dataset is input

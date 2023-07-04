@@ -1,13 +1,17 @@
+from src.preprocessing import *
+from src.variables import *
+
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.cluster import KMeans
 from sklearn.svm import SVC
-from transformers import BertForSequenceClassification, Trainer, TrainingArguments
-
-from transformers import BertForSequenceClassification, Trainer, TrainingArguments
+from transformers import Trainer, TrainingArguments
+from transformers import AutoTokenizer, EncoderDecoderModel
 from torch.utils.data.dataset import Dataset
 from torch.utils.data.dataloader import DataLoader
 
+import pandas as pd
 import random
+import torch
 
 
 def train_model(dataset, model, embedding, saved_data=False):
@@ -20,35 +24,50 @@ def train_model(dataset, model, embedding, saved_data=False):
     :param saved_data: Indicates whether to use saved preprocessed data if available.
     :return: Trained model
     """
-    
-    # Preprocess the data based on the selected dataset
-    df = preprocess_data(saved_data, dataset)
-    
-    # Split data into training and test sets
-    X_train, X_test, y_train, y_test = split_dataset(df)
-    
-    # Vectorize the training data
-    X_train, vectorizer = choose_vectorizer(embedding, X_train)
 
-    # Train selected model
-    if model == 'LDA':
-        trained_model = train_lda_model(X_train, n_components=6, random_state=42)
-    elif model == 'K-Means':
-        trained_model = train_kmeans_model(X_train, n_clusters=6, random_state=42)
-    elif model == 'SVM':
-        trained_model = train_svm_model(X_train, y_train, kernel='linear', random_state=42)
-    elif model == 'BERT':
-        if isinstance(X_train, str):
-            trained_model = train_bert_seq2seq_model(df, model, tokenizer)
-        else:
-            raise ValueError("Invalid data type for BERT model. Expected raw text data.")
+    # Read the dataset
+    if dataset == 'UPV':
+        df = pd.read_csv(f'{get_root_projet()}{upv_path}{upv_dataset_name}.csv', encoding='utf-8')
+    elif dataset == 'Wikipedia':
+        df = pd.read_csv(f'{get_root_projet()}{wikipedia_path}{wikipedia_with_categories_dataset_name}.csv', encoding='utf-8')
     else:
-        raise ValueError("Invalid model type. Expected one of: 'LDA', 'K-Means', 'SVM', 'BERT'")
+        raise ValueError(f"Invalid '{dataset}' dataset. Expected one of: 'UPV', 'Wikipedia'")
     
-    # Save model and vectorizer for future use
-    save_model(trained_model, model)
-    save_vectorizer(vectorizer, embedding)
-    
+    if model == 'BERT':
+        if os.path.exists(f"{get_root_projet()}{bert_path}{summarize_text}{tokenizer}"):
+            summarize_text_tokenizer = AutoTokenizer.from_pretrained(f"{get_root_projet()}{bert_path}{summarize_text}{tokenizer}")
+        else:
+            raise ValueError(f"Folder '{summarize_text}{tokenizer}' from '{get_root_projet()}{bert_path}' is missing.")
+
+        if os.path.exists(f"{get_root_projet()}{bert_path}{summarize_text}{model_folder}"):
+            summarize_text_model = EncoderDecoderModel.from_pretrained(f"{get_root_projet()}{bert_path}{summarize_text}{model_folder}")
+        else:
+            raise ValueError(f"Folder '{summarize_text}{model_folder}' from '{get_root_projet()}{bert_path}' is missing.")
+
+        trained_model = train_bert_seq2seq_model(df, summarize_text_model, summarize_text_tokenizer)
+    elif model in ['LDA', 'K-Means', 'SVM']:
+        # Preprocess the data based on the selected dataset
+        df = preprocess_data(saved_data, dataset, df)
+        
+        # Split data into training and test sets
+        X_train, X_test, y_train, y_test = split_dataset(df)
+        
+        # Vectorize the training data
+        X_train, vectorizer = choose_vectorizer(embedding, X_train)
+
+        if model == 'LDA':
+            trained_model = train_lda_model(X_train, n_components=6, random_state=42)
+        elif model == 'K-Means':
+            trained_model = train_kmeans_model(X_train, n_clusters=6, random_state=42)
+        elif model == 'SVM':
+            trained_model = train_svm_model(X_train, y_train, kernel='linear', random_state=42)
+
+        # Save model and vectorizer for future use
+        save_model(trained_model, model)
+        save_vectorizer(vectorizer, embedding)
+    else:
+        raise ValueError(f"Invalid '{model}' dataset. Expected one of: 'LDA', 'K-Means', 'SVM', 'BERT'")
+        
     return trained_model
 
 def train_lda_model(dtm, n_components=3, random_state=42):
@@ -147,17 +166,17 @@ def train_bert_seq2seq_model(df, model, tokenizer, batch_size=2):
 
     # Define training arguments
     training_args = TrainingArguments(
-        predict_with_generate=True,
         evaluation_strategy="steps",
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
         fp16=False, 
-        output_dir="./",
+        output_dir=f"{get_root_projet()}{bert_path}train/",
         logging_steps=2,
         save_steps=10,
-        eval_steps=4,
-        local_rank=-1
+        eval_steps=4
     )
+
+    training_args.local_rank = -1
 
     # Train the model
     trainer = Trainer(

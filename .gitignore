@@ -1,7 +1,22 @@
+# Macintosh files
 .DS_Store
-*.csv
-.ipynb_checkpoints
+
+# Python files
 __pycache__
+
+# Datasets
+*.csv
+data/datasets/input/input.txt
+
+# Intermediate savings
 *.pickle
-data/models/BERT
+
+# Notebooks
 *.ipynb
+.ipynb_checkpoints
+
+# Computed models
+data/models/BERT
+data/models/K-Means
+data/models/LDA
+data/models/SVM

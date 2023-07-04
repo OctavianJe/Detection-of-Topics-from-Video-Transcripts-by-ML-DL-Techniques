@@ -117,7 +117,7 @@ def is_word_in_vocab(word):
     :return: True if the word is in the vocabulary, False otherwise
     """
 
-    nlp = spacy.load('es_core_news_lg')
+    nlp = spacy.load('es_core_news_md')
     return word in nlp.vocab.strings
 
 def filter_words(word_list, filter_list):

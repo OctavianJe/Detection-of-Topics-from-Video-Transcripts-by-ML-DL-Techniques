@@ -12,7 +12,8 @@ def process_data_model(
     train, 
     download_dataset=None, 
     download_categories=None,
-    embedding=None
+    embedding=None,
+    file=None
 ):
     """
     process_data_model is used to handle the complete workflow of downloading, saving and processing a
@@ -27,6 +28,7 @@ def process_data_model(
                                 need to be downloaded, default is None.
     :param embedding: Name of the embedding to be used for training, options are 'CV' (CountVectorizer) 
                       or 'TF-IDF' (Term Frequency-Inverse Document Frequency), default is None.
+    :param file: Specify if data need to be read from file or from terminal
     """
 
     # Check that dataset is one of the allowed types
@@ -45,7 +47,13 @@ def process_data_model(
 
     input_data = None
     if dataset == "input":
-        input_data = input("Enter the input: ")
+        if file:
+            # Insert data from text file
+            with open(f"{get_root_projet()}{input_path}input.txt", "r") as file:
+                input_data = file.read()
+        else:
+            # Insert data from terminal
+            input_data = input("Enter the input: ")
 
     # Check that model is one of the allowed types
     if model not in ["LDA", "K-Means", "SVM", "BERT"]:
@@ -131,6 +139,15 @@ def parse_arguments():
                 action='store_true',
                 help="Do the Wikipedia article categories need to be downloaded?"
             )
+    else:
+        parser.add_argument(
+            '--file',
+            dest='file',
+            required=False,
+            default=False,
+            action='store_true',
+            help="Do the input data need to be read from file?"
+        )
 
     args = parser.parse_args()
 
@@ -158,6 +175,7 @@ def main():
         args_dict.get('download_dataset', None),
         args_dict.get('download_categories', None),
         args_dict.get('embedding', None),
+        args_dict.get('file', None)
     )
 
 if __name__ == "__main__":

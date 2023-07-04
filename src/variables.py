@@ -4,6 +4,7 @@ Global variables
 
 dataset_path = '/data/datasets/'
 
+input_path = f'{dataset_path}input/'
 upv_path = f'{dataset_path}UPV/'
 wikipedia_path = f'{dataset_path}Wikipedia/'
 

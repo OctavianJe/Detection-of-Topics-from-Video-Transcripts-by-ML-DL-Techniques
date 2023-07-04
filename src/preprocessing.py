@@ -8,6 +8,7 @@ import nltk
 import os
 import pandas as pd
 import pickle
+import re
 import spacy
 
 nltk.download('stopwords')
@@ -65,30 +66,32 @@ def preprocess_data(saved_data, dataset, df) -> DataFrame:
 
     if saved_data == False:
         if dataset == "UPV":
-            preprocess_UPV()
+            preprocess_UPV(df)
         elif dataset == "Wikipedia":
-            return preprocess_Wikipedia()
+            return preprocess_Wikipedia(df)
+        else:
+            raise ValueError(f"Invalid '{dataset}' dataset. Expected one of: 'UPV', 'Wikipedia'")
     else:
         if dataset == "UPV":
             if os.path.exists('mediaUPV-preprocessed.pickle'):
                 return load_pickle()
             else:
-                return preprocess_UPV()
+                return preprocess_UPV(df)
         elif dataset == "Wikipedia":
             if os.path.exists('wikipedia-preprocessed.pickle'):
                 return load_pickle()
             else:
-                return preprocess_Wikipedia()
+                return preprocess_Wikipedia(df)
+        else:
+            raise ValueError(f"Invalid '{dataset}' dataset. Expected one of: 'UPV', 'Wikipedia'")
 
-def preprocess_Wikipedia():
+def preprocess_Wikipedia(df):
     """
     preprocess_Wikipedia is used to preprocess Wikipedia dataset
 
+    :param df: initial unpreprocessed Wikipedia DataFrame
     :return: preprocessed DataFrame
     """
-
-    # Load the Wikipedia dataset
-    df = load_wikipedia_dataset()
     
     # Clean the dataset
     clean_dataset(df)
@@ -104,21 +107,22 @@ def preprocess_Wikipedia():
     
     return df
 
-def preprocess_UPV():
+def preprocess_UPV(df):
     """
     preprocess_UPV is used to preprocess UPV dataset
 
+    :param df: initial unpreprocessed UPV DataFrame
     :return: preprocessed DataFrame
     """
-
-    # Load the UPV dataset
-    df = load_upv_dataset()
     
     # Clean the dataset
     clean_dataset(df)
     
-    # Preprocess text for each entry in the dataset
-    df['text'] = df['text'].apply(preprocess_text)
+    # Preprocess 'Transcription' for each entry in the dataset
+    df['Transcription'] = df['Transcription'].apply(preprocess_text)
+
+    # Preprocess 'Title' column for each entry in the dataset
+    df['Title'] = df['Title'].apply(preprocess_text)
 
     # Convert 'Keywords' column from string to list
     df = convert_string_to_list(df, 'Keywords')
@@ -173,11 +177,16 @@ def preprocess_text(text):
     :return: A list of processed tokens.
     """
 
+    # Load spacy Spanish large corpus
+    nlp = spacy.load('es_core_news_md')
+
     # Tokenize and lemmatize
     doc = nlp(text)
     processed_tokens = [token.lemma_ for token in doc if not token.is_stop]
+
     # Filter out non-alphabetical characters and words with length <= 3
     processed_tokens = [token for token in processed_tokens if re.match(r'^[a-zA-Z]+$', token) and len(token) > 3]
+    
     return processed_tokens
 
 def exclude_empty_categories(dataset, df):
