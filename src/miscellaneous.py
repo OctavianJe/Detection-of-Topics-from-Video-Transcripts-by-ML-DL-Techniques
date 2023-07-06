@@ -1,4 +1,5 @@
 from collections import Counter
+from deep_translator import GoogleTranslator
 from langdetect import detect
 from pandas import DataFrame
 from spellchecker import SpellChecker
@@ -21,32 +22,31 @@ def get_root_projet() -> str:
 
     return os.getcwd()
 
-def translate_text(text, max_length=500):
+def translate_text(text, from_lang='spanish', to_lang='english'):
     """
     translate_text is used to translate the given text from Spanish to English.
 
     :param text: The text to be translated.
-    :param max_length: The maximum length for a chunk of text to be translated at once (default: 500).
-    :return: The translated text.
+    :param from_lang: The language of text
+    :param to_lang: The language to translate the given text
 
-    Note: This function splits the input text into chunks of up to max_length characters, translates each chunk separately,
-    and then concatenates the translated chunks.
+    :return: Translated text
     """
     
-    translator = Translator(from_lang='es', to_lang='en')
+    return GoogleTranslator(source=from_lang, target=to_lang).translate(text)
 
-    parts = []
-    while len(text) > max_length:
-        part = text[:max_length]
-        last_space = part.rfind(' ')
-        if last_space > -1:
-            part = part[:last_space]
-        parts.append(part)
-        text = text[len(part):]
-    parts.append(text)
+def translate_file(path, from_lang='spanish', to_lang='english'):
+    """
+    translate_text is used to translate the given text from Spanish to English.
 
-    return ' '.join(translator.translate(p) for p in parts)
+    :param text: The text to be translated.
+    :param from_lang: The language of text
+    :param to_lang: The language to translate the given text
 
+    :return: Translated text
+    """
+    
+    return GoogleTranslator(source=from_lang, target=to_lang).translate_file(path)
 
 def iterative_uniques(df, column):
     """

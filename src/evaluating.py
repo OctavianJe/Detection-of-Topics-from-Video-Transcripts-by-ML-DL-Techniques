@@ -61,9 +61,11 @@ def evaluate_model(dataset, model, input_data):
 
         if isinstance(evaluation_dataset, str):
             summary = generate_summary(evaluation_dataset, summarize_text_tokenizer, summarize_text_model, device)
-            print(summary)
+            print(f'Original text summary: {summary}')
+            print(f'Translated to English text summary: {translate_text(summary)}')
             prediction = process_summary(summary, predict_topic_tokenizer, predict_topic_model)
-            print(prediction)
+            print(f'Predicted topic: {prediction}')
+            print(f'Translated to English predicted topic: {translate_text(prediction)}')
         elif isinstance(evaluation_dataset, pd.DataFrame):
             if dataset == "UPV":
                 evaluation_dataset['Topic'] = evaluation_dataset.apply(lambda row: process_row(row, summarize_text_tokenizer, summarize_text_model, predict_topic_tokenizer, predict_topic_model, device, 'Transcription'), axis=1)
